@@ -6,9 +6,12 @@
   },
   "scripts": {
     "build": "tsc",
+    "build:src": "rm -rf dist/ && tsc --outDir dist/",
     "watch": "tsc -w",
     "test": "jest",
     "cdk": "cdk",
+    "deploy": "yarn build:src && yarn cdk deploy '*'",
+    "destory": "yarn cdk destroy '*'",
     "cdk:upgrade": "ncu -u aws-cdk @aws-cdk/assert @aws-cdk/core @aws-cdk/aws-lambda @aws-cdk/aws-stepfunctions @aws-cdk/aws-stepfunctions-tasks @types/jest jest ts-jest "
   },
   "devDependencies": {

@@ -9,7 +9,7 @@ export class StepFunctionsStack extends cdk.Stack {
 
     const taskFn = new lambda.Function(this, "taskFn", {
       runtime: lambda.Runtime.NODEJS_12_X,
-      code: lambda.Code.fromAsset("handlers"),
+      code: lambda.Code.fromAsset("dist/src"),
       handler: "task.handler",
     });
 
@@ -18,7 +18,7 @@ export class StepFunctionsStack extends cdk.Stack {
       outputPath: "$.Payload",
     });
     const secondState = new tasks.LambdaInvoke(this, "次の処理", {
-      inputPath: "$.message",
+      inputPath: "$",
       lambdaFunction: taskFn,
     });
 
