@@ -14,12 +14,10 @@ export class StepFunctionsStack extends cdk.Stack {
   // シーケンシャルステップを持つ基本的な Step Functions
   // MEMO: task の名前も含めてユニークな名前にする必要がある。
   private basicSfn() {
-    const taskFn = new lambda.Function(this, "basicLambdaFn", {
-      runtime: lambda.Runtime.NODEJS_12_X,
-      code: lambda.Code.fromAsset("dist/src"),
-      handler: "task.basicLambdaFn",
-    });
+    // lambda関数を作成
+    const taskFn = this.createLambdaFn("basicLambdaFn", "task.basicLambdaFn");
 
+    // Step Functionsの入出力 & 使用するLambda関数を定義
     const firstState = new tasks.LambdaInvoke(this, "最初の処理", {
       lambdaFunction: taskFn,
       outputPath: "$.Payload",
@@ -29,8 +27,10 @@ export class StepFunctionsStack extends cdk.Stack {
       lambdaFunction: taskFn,
     });
 
+    // パイプラインの定義
     const basicDefinition = firstState.next(secondState);
 
+    // ステートマシン（Step Functions）の作成
     new sfn.StateMachine(this, "stateMachine", {
       definition: basicDefinition,
     });
@@ -38,21 +38,18 @@ export class StepFunctionsStack extends cdk.Stack {
 
   // 並列処理を使った Step Functions
   private parallelSfn() {
-    const parallel1taskFn = new lambda.Function(this, "parallel1LambdaFn", {
-      runtime: lambda.Runtime.NODEJS_12_X,
-      code: lambda.Code.fromAsset("dist/src"),
-      handler: "task.parallel1LambdaFn",
-    });
-    const parallel2taskFn = new lambda.Function(this, "parallel2LambdaFn", {
-      runtime: lambda.Runtime.NODEJS_12_X,
-      code: lambda.Code.fromAsset("dist/src"),
-      handler: "task.parallel2LambdaFn",
-    });
-    const finalTaskFn = new lambda.Function(this, "finalLambdaFn", {
-      runtime: lambda.Runtime.NODEJS_12_X,
-      code: lambda.Code.fromAsset("dist/src"),
-      handler: "task.finalLambdaFn",
-    });
+    const parallel1taskFn = this.createLambdaFn(
+      "parallel1LambdaFn",
+      "task.parallel1LambdaFn"
+    );
+    const parallel2taskFn = this.createLambdaFn(
+      "parallel2LambdaFn",
+      "task.parallel2LambdaFn"
+    );
+    const finalTaskFn = this.createLambdaFn(
+      "finalLambdaFn",
+      "task.finalLambdaFn"
+    );
 
     const parallelState1 = new tasks.LambdaInvoke(this, "並列処理１", {
       lambdaFunction: parallel1taskFn,
@@ -72,6 +69,17 @@ export class StepFunctionsStack extends cdk.Stack {
 
     new sfn.StateMachine(this, "parallelStateMachine", {
       definition: parallelDefinition,
+    });
+  }
+
+  // 条件分岐を使った Step Functions
+
+  // Lambda作成用関数
+  private createLambdaFn(fnName: string, handler: string) {
+    return new lambda.Function(this, fnName, {
+      runtime: lambda.Runtime.NODEJS_12_X,
+      code: lambda.Code.fromAsset("dist/src"),
+      handler: handler,
     });
   }
 }
