@@ -1,3 +1,5 @@
+import { isDate } from "util";
+
 type TaskResponse = {
   title: string;
   message: string;
@@ -37,4 +39,40 @@ export async function finalLambdaFn(event: any): Promise<object> {
   };
 }
 
+export async function confitionalLambdaFn(event: any): Promise<Object> {
+  switch (getRandomInt(2)) {
+    case 0:
+      return {
+        color: "私は「青」が好きです！",
+      };
+    case 1:
+      return {
+        color: "私は「赤」が好きです！",
+      };
+    default:
+      // 2 のケース
+      return {
+        color: "私はどの色も…",
+      };
+  }
+}
+
+export async function successLambdaFn(event: any): Promise<Object> {
+  return {
+    message: "処理が成功しました！",
+    input: event,
+  };
+}
+
+export async function failedLambdaFn(event: any): Promise<Object> {
+  return {
+    message: "処理が失敗しました…。",
+    input: event,
+  };
+}
+
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function getRandomInt(max: number) {
+  return Math.round(Math.random() * max);
+}
