@@ -10,6 +10,7 @@ export class StepFunctionsStack extends cdk.Stack {
     this.basicSfn();
     this.parallelSfn();
     this.conditionalSfn();
+    this.mapSfn();
   }
 
   // シーケンシャルステップを持つ基本的な Step Functions
@@ -38,7 +39,7 @@ export class StepFunctionsStack extends cdk.Stack {
     });
   }
 
-  // 並列処理を使った Step Functions
+  // 並行処理（異なる処理を同時実行）を使った Step Functions
   private parallelSfn() {
     // lambda関数を作成
     const parallel1taskFn = this.createLambdaFn(
@@ -130,6 +131,51 @@ export class StepFunctionsStack extends cdk.Stack {
     new sfn.StateMachine(this, "conditionalStateMachine", {
       stateMachineName: "conditional-state-machine",
       definition: conditionalDefinition,
+    });
+  }
+
+  // 並列処理（同じ処理を同時実行）を使った Step Functions
+  private mapSfn() {
+    // lambda関数を作成
+    const mapTaskFn = this.createLambdaFn("mapLambdaFn", "task.mapLambdaFn");
+    const finalTaskFn = this.createLambdaFn(
+      "finalMapLambdaFn",
+      "task.finalLambdaFn"
+    );
+
+    // Step Functionsの入出力 & 使用するLambda関数を定義
+    const mapState = new tasks.LambdaInvoke(
+      this,
+      "並列処理（同じ処理を同時実行）",
+      {
+        lambdaFunction: mapTaskFn,
+        outputPath: "$.Payload",
+      }
+    );
+    const finalState = new tasks.LambdaInvoke(this, "並列処理後の最後の処理", {
+      inputPath: "$",
+      lambdaFunction: finalTaskFn,
+    });
+
+    // input の inputForMap プロパティに配列を渡す
+    // 文字列のみ渡せるっぽい
+    // Ex.)
+    // {
+    //   "inputForMap": ["1", "2", "3", "4", "5", "6", "7"]
+    // }
+    const map = new sfn.Map(this, "並列処理", {
+      maxConcurrency: 5,
+      itemsPath: sfn.JsonPath.stringAt("$.inputForMap"),
+    });
+    map.iterator(mapState);
+
+    // パイプラインの定義
+    const mapDefinition = map.next(finalState);
+
+    // ステートマシン（Step Functions）の作成
+    new sfn.StateMachine(this, "mapStateMachine", {
+      stateMachineName: "map-state-machine",
+      definition: mapDefinition,
     });
   }
 

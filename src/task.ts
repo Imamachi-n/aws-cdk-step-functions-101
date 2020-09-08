@@ -71,6 +71,14 @@ export async function failedLambdaFn(event: any): Promise<Object> {
   };
 }
 
+export async function mapLambdaFn(event: any): Promise<Object> {
+  await sleep(2000);
+
+  return {
+    message: `並列処理: #${event}`,
+  };
+}
+
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 function getRandomInt(max: number) {
